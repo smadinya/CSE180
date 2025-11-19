@@ -1,0 +1,240 @@
+General PostgreSQL Information
+The class will have a total of 4 Lab Assignments, where you will be working with
+PostgreSQL. To work on the lab assignments, you will set up PostgreSQL inside a Docker
+container. You can find information on how to achieve that in the Docker install guide (under
+Piazza -> Resources) and the TAs will help you in the Lab sections. Once you complete the
+steps in the Docker install guide, you will be running an application called psql, which can
+execute SQL statements and psql commands.
+Use of schemas
+For each lab assignment, you will create a schema to set apart the database tables created
+in that assignment from tables that you created before (or will create in the future), as well
+as from tables (and other objects) you create in your default schema, whose schema name
+is public. See here for more details on PostgreSQL schemas. To create a schema whose
+name is Lab1, at the psql interface you would execute:
+CREATE SCHEMA Lab1;
+After you create that schema, you want to set it to be your default schema when you run
+psql. If you do not set it as your default schema, then you will have to qualify your table
+names with the schema name (e.g. Lab1.Products if you have a table with the name
+Products in the schema). To set the default schema, you modify your search path, as
+described in section 5.8.3 here:
+ALTER ROLE username SET SEARCH_PATH TO Lab1;
+Note: You need to log out and log in again, for this default schema change to take effect.
+Students frequently forget to do this.
+To verify your search path, use:
+SHOW SEARCH_PATH;
+PostgreSQL converts schema names (like Lab1) and other identifiers (like table names) to
+lowercase, so Lab1 becomes lab1, not Lab1. That’s okay; we use capitalization for
+readability (and we suggest that you do that too). You can put the “double quote” symbol (“)
+around an identifier if you really care about its case … but then you’ll always have to put
+double quotes around that identifier, e.g., “Lab1”. We won’t put double quotes around
+
+identifiers, and neither do most students. Double quotes are not required in this class; it’s
+okay for all identifiers to be converted to lowercase.
+
+PostgreSQL (lack of) backups
+PostgreSQL is not backed up, so anything you need long-term should be saved in your file
+system, not in PostgreSQL (or the docker container).
+For the duration of the class, we suggest that you establish some kind of routine that
+includes reloading your database from the files created in this project part each time you
+want to get a "fresh" start with PostgreSQL. Remember to delete the contents of each
+relation (or destroy and recreate the relations) before reloading. Otherwise, you will get
+errors if the relation has a key (or you will have multiple copies of data if the relation does
+not have a key). To get rid of a table whose table name is R, issue the following command:
+at the psql interface of the server:
+DROP TABLE R;
+If you want to get rid of all tuples in R without deleting the table itself, issue the following
+command:
+DELETE FROM R;
+If you want to drop a schema whose name is myschema (and all the tables and other
+objects in it), issue the following command:
+DROP SCHEMA myschema CASCADE;
+SQL in PostgreSQL
+PostgreSQL's implementation of SQL differs somewhat from the SQL standard, and also
+differs from the SQL that we cover in class based on the textbook. The PostgreSQL SQL
+Conformance page provides more information some of the differences.
+
+Generic References
+General information about PostgreSQL can be found here. PostgreSQL documents can be
+found here. In the wiki.postgresql.org Frequently Asked Questions (FAQ), you will find links
+to some reasonable tutorials under “How can I learn SQL?”
+Interacting with psql
+You can use the psql command line interface to interact with your database. See psql
+PostgreSQL Client Application for information on using psql. Script files are text files of psql
+commands which can be executed like a batch file using the the \i command in psql. The
+syntax is:
+\i filename
+entered following the psql prompt, where filename is the complete (case sensitive) name
+of the script file you wish to run. For example, if you only want to run an execution script
+named myfile.sql, you can do the following:
+
+psql -h localhost -U
+username
+
+To run PostgreSQL's command line
+interface to log into your database
+
+\i myfile.sql
+
+To import the execution script myfile.sql
+
+\q
+
+To exit psql (PostgreSQL's command line
+interface)
+
+Of course, you may run multiple scripts and commands within a psql session before you exit
+psql. Please recognize the difference between commands which work within psql and the
+commands that work for unix.
+The execution script file you create can consist of almost any series of commands which
+you could enter following the psql prompt. This includes all of the SQL commands which
+you will be using to create, modify and test your database. Examples include the CREATE
+TABLE and SELECT commands. Just like when you use the psql command line interface,
+you must terminate each SQL command in your script file with a semicolon. \i and \q are
+psql meta-commands, and they do not need semicolons.
+
+Here is an example script file that creates a table (relation) named products:
+CREATE TABLE products (
+productID INT,
+name VARCHAR(80),
+price NUMERIC(10,2),
+retailPrice NUMERIC(10,2)
+);
+Here is an example script file that loads four tuples into the table (relation) named products
+created using the previous script file:
+COPY products FROM stdin USING DELIMITERS '|';
+1419|American Greetings CreataCard Gold V4.0|21.49|25.24
+1424|Barbie(R) Nail Designer(TM)|20.74|25.99
+1427|Panzer Commander|21.99|30.24 1431|Riven:
+The Sequel to Myst|31.99|40.24
+\.
+This is the format you will use for the files that load data into your tables. The USING
+DELIMITERS '|' and the use of '|' as a delimiter is optional. (The default delimiter is the tab
+character, but we’ll use '|' because it’s visible to us, and a tab isn’t.) The delimited data on
+each line must match the attributes and their types in your table in a one to one manner and
+in the order they were defined in your CREATE TABLE commands. The COPY data must
+be terminated with '\.'
+For testing, some students have found it convenient to have a separate script file to
+populate each of the tables. It is also often convenient have a single script file to create all
+of my tables in an assignment, and another one to drop all of the tables (or drop the
+schema). Look for examples at the end of this document.
+
+Example Scripts
+Note: These script files are for an example database that records information on bars,
+customers, beers, and the associations among them. You can find these files in
+BeerScriptsRI.zip, which is on Piazza under Resources→General Information.
+
+createbeers.sql
+-- Sample Script file to Create a BEERS DB
+-- Print out current time. NOT required in your Lab assignments
+SELECT timeofday();
+-- Create Tables
+CREATE TABLE Beers (
+beer VARCHAR(30),
+manf VARCHAR(50),
+PRIMARY KEY (beer)
+);
+CREATE TABLE Bars (
+bar VARCHAR(30),
+addr VARCHAR(50),
+license VARCHAR(50),
+PRIMARY KEY (bar)
+);
+CREATE TABLE Sells (
+bar VARCHAR(30),
+beer VARCHAR(30),
+price REAL,
+PRIMARY KEY (bar, beer),
+FOREIGN KEY (bar) REFERENCES Bars,
+FOREIGN KEY (beer) REFERENCES Beers
+);
+
+CREATE TABLE Drinkers (
+drinker VARCHAR(30),
+addr VARCHAR(50),
+phone CHAR(16),
+PRIMARY KEY (drinker)
+);
+CREATE TABLE Likes (
+drinker VARCHAR(30),
+beer VARCHAR(30),
+PRIMARY KEY (drinker, beer),
+FOREIGN KEY (drinker) REFERENCES Drinkers,
+FOREIGN KEY (beer) REFERENCES Beers
+);
+CREATE TABLE Frequents (
+drinker VARCHAR(30),
+bar VARCHAR(30),
+PRIMARY KEY (drinker, bar),
+FOREIGN KEY (drinker) REFERENCES Drinkers,
+FOREIGN KEY (bar) REFERENCES Bars
+);
+-- Print out current time.
+SELECT timeofday();
+
+NOT required in your Lab assignments
+
+databeers.sql
+-- Sample Script file to Populate a BEERS DB
+-- Print out current time. NOT required in your Lab Assignments.
+SELECT timeofday();
+-- Populate the tables
+COPY Beers FROM stdin USING DELIMITERS '|';
+Coors|Adolph Coors
+Coors Lite|Adolph Coors
+Miller|Miller Brewing
+Miller Lite|Miller Brewing
+MGD|Miller Brewing
+Bud|Anheuser-Busch Bud
+Lite|Anheuser-Busch
+Michelob|Anheuser-Busch
+Anchor Steam|Anchor Brewing
+\.
+COPY Bars FROM stdin USING DELIMITERS '|';
+Joes|123 Any Street|B7462A
+Sues|456 My Way|C5473S
+\.
+COPY Sells FROM stdin USING DELIMITERS '|';
+Joes|Coors|2.50
+Joes|Bud|2.50
+Joes|Bud Lite|2.50
+Joes|Michelob|2.50
+Joes|Anchor Steam|3.50
+Sues|Coors|2.00
+Sues|Miller|2.00
+\.
+
+COPY Drinkers FROM stdin USING DELIMITERS '|';
+Bill Jones|180 Saint St.|831-459-1812
+Kelly Arthur|180 Alto Pl.|650-856-2002
+Fred|1234 Fifth St.|831-426-1956
+\.
+COPY Likes FROM stdin USING DELIMITERS '|';
+Bill Jones|Miller
+Bill Jones|Michelob
+Kelly Arthur|Anchor Steam
+Fred|MGD
+\.
+COPY Frequents FROM stdin USING DELIMITERS '|';
+Bill Jones|Joes
+Bill Jones|Sues
+Kelly Arthur|Joes
+\.
+-- Print out current time. NOT required in your Lab Assignments.
+SELECT timeofday();
+
+querybeers.sql
+-- Print out current time. NOT required in your Lab Assignments.
+SELECT timeofday();
+-- Execute some SELECT queries-SELECT * FROM Bars;
+SELECT * FROM Drinkers;
+-- Print out current time. NOT required in your Lab Assignments.
+SELECT timeofday();
+dropbeers.sql
+DROP TABLE Beers;
+DROP TABLE Bars;
+DROP TABLE Sells;
+DROP TABLE Likes;
+DROP TABLE Frequents;
+DROP TABLE Drinkers;
+
+

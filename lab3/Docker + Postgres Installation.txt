@@ -1,0 +1,157 @@
+﻿CSE180 Lab: Docker + PostgreSQL Setup Guide
+
+
+
+
+
+
+Step 1: Install Docker
+
+
+Docker lets us run services in isolated containers. You’ll need it to spin up your lab environment. 
+
+
+Choose your OS:
+- Windows/Mac: Download Docker Desktop: 
+- https://docs.docker.com/desktop/setup/install/windows-install/ 
+- https://docs.docker.com/desktop/setup/install/mac-install/ 
+- Linux: Follow the Docker Engine Install Guide: 
+- https://docs.docker.com/engine/install/ 
+
+
+Verify installation: docker --version 
+
+
+
+
+
+
+
+
+Step 2: Start Docker
+
+
+- Windows/Mac: Open Docker Desktop and wait for the icon to fully load.
+
+
+- Linux: 
+sudo systemctl start docker 
+export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
+
+
+Step 3: Install PostgreSQL (Client Tools)
+
+
+Download version 15.14 from: https://www.postgresql.org/download/ 
+
+
+Be sure its version 15.14.Mismatched versions may break lab scripts. 
+If port 5432 is in use: Edit the 'cse180-compose.yml' file: 
+ports: - "5433:5432"
+
+
+
+
+
+
+Step 5: Save Docker Compose File
+
+
+In terminal: 
+cd ~/CSE180-lab 
+docker compose -f cse180-compose.yml up 
+
+
+This pulls images and starts services defined in the YAML. 
+
+
+
+
+
+
+Step 6: Connect to PostgreSQL
+
+
+Open a new terminal and try: 
+docker exec psql -h localhost -U cse180 cse180
+
+
+If it fails, use: 
+docker exec -it container-psql psql -U cse180 -d cse180
+
+
+To check containers: 
+docker ps
+
+
+
+
+ (Optional) GUI Access with PgAdmin
+
+
+1. Download and launch PgAdmin: https://www.pgadmin.org/ 
+
+
+2. Register a new server:
+- General Tab > Name: CSE180PostgreSQL
+- Connection Tab: 
+Host: localhost 
+Port: 5432 (or 5433) 
+Database: cse180
+Username: cse180 
+Password: database4me 
+
+
+If pgAdmin is crashing try this out:
+
+https://stackoverflow.com/questions/67527280/get-fatal-error-server-could-not-be-contacted-when-running-pgadmin4-nonetype
+
+
+Step 7: Stop & Clean Up
+
+
+To shut everything down: 
+docker compose -f cse180-compose.yml down
+
+
+
+
+
+
+ Quick Tips
+
+
+- Always run commands from the folder with the YAML file. 
+- Use 'docker ps' to check running containers. 
+- Change port 5432 only if your local PostgreSQL is using it.
+
+
+
+
+
+
+Docker Quick Reference for Students 
+
+
+Copy files into container: docker cp container-psql:. 
+
+
+Start container: 
+docker compose -f cse180-compose.yml up 
+
+
+Enter docker environment: 
+docker exec -it container-psql psql -U cse180 -d cse180 
+
+
+Copy files into docker environment:
+        docker cp <file_name> container-psql:.
+
+
+Shut down container: 
+docker compose -f cse180-compose.yml down
+
+
+Login to Postgres docker container with psql directly
+This will allow psql to have visibility into your own filesystem, voiding the need to explicitly copy files between your filesystem and the docker containers filesystem.
+psql -h localhost -p 5432 -U cse180
